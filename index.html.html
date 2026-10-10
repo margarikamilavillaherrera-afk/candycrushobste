@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obstetric Match</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#E9F1EC; --surface:#FFFFFF; --ink:#16313A; --muted:#5B7580; --line:#C9DAD2;
+  --teal:#14595B; --board:#0F3B40; --board2:#0A2B2F; --rose:#E4607A; --butter:#F4CF58; --ice:#BFE6F7;
+  --t0:#F9C6D0; --t1:#BFE3F5; --t2:#D9CBF3; --t3:#FBE29A; --t4:#F5B3AA; --t5:#C9E8B5;
+  --head:'Fredoka','Trebuchet MS',system-ui,sans-serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1B1F; --surface:#13282D; --ink:#E6F2EE; --muted:#93AFB0; --line:#244148;
+    --teal:#4FB3AE; --board:#071B1E; --board2:#041214;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1B1F; --surface:#13282D; --ink:#E6F2EE; --muted:#93AFB0; --line:#244148;
+  --teal:#4FB3AE; --board:#071B1E; --board2:#041214;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:var(--head);margin:0;line-height:1.1}
+button{font-family:var(--head);font-size:1rem;font-weight:600;cursor:pointer;border:0;border-radius:14px;padding:.7rem 1.1rem;color:#fff;background:var(--teal);transition:transform .12s, filter .12s}
+button:hover{filter:brightness(1.08)}
+button:active{transform:scale(.97)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+button.rose{background:var(--rose)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.hidden{display:none!important}
+.screen{max-width:560px;margin:0 auto;padding:18px 16px 40px}
+
+/* ---------- Inicio ---------- */
+.hero{display:flex;flex-direction:column;gap:18px;padding-top:10px}
+.logo-row{display:flex;align-items:center;gap:12px}
+.logo-ring{width:64px;height:64px;border-radius:50%;background:var(--t0);display:grid;place-items:center;font-size:34px;box-shadow:inset 0 -5px 0 rgba(0,0,0,.12),0 6px 0 var(--rose)}
+.hero h1{font-size:2.5rem;color:var(--teal);letter-spacing:-.01em}
+.hero p.lead{margin:0;color:var(--muted);font-size:1.05rem}
+.demo{background:var(--board);padding:10px;border-radius:22px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.demo span{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;box-shadow:inset 0 -3px 0 rgba(0,0,0,.14)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:700}
+.field input{font:inherit;padding:.75rem .9rem;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.diffs{display:grid;gap:8px}
+.diff{display:flex;align-items:center;gap:12px;text-align:left;background:var(--surface);color:var(--ink);border:2px solid var(--line);padding:.75rem .9rem}
+.diff small{display:block;font-family:var(--body);font-weight:400;color:var(--muted)}
+.diff[aria-pressed="true"]{border-color:var(--rose);box-shadow:0 0 0 3px color-mix(in srgb,var(--rose) 25%,transparent)}
+.diff .ic{font-size:1.5rem}
+.fine{font-size:.82rem;color:var(--muted)}
+
+/* ---------- Mapa ---------- */
+.map-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+.map-head h2{font-size:1.7rem;color:var(--teal)}
+.map-head p{margin:2px 0 0;color:var(--muted)}
+.path{display:flex;flex-direction:column;gap:14px;position:relative}
+.node{display:flex;align-items:center;gap:14px;background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:12px 14px;text-align:left;color:var(--ink)}
+.node:nth-child(even){margin-left:28px}
+.node:nth-child(odd){margin-right:28px}
+.node .num{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:var(--head);font-size:1.3rem;font-weight:700;background:var(--rose);color:#fff;flex:none}
+.node.locked{opacity:.5}
+.node.locked .num{background:var(--line);color:var(--muted)}
+.node b{font-family:var(--head);font-size:1.1rem;display:block}
+.node small{display:block;font-family:var(--body);font-weight:400;color:var(--muted)}
+.node .st{margin-left:auto;font-size:1rem;white-space:nowrap}
+
+/* ---------- Juego ---------- */
+.hud{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.hud h2{font-size:1.25rem;color:var(--teal)}
+.hud .sub{color:var(--muted);font-size:.92rem}
+.moves{background:var(--rose);color:#fff;border-radius:16px;padding:6px 14px;text-align:center;font-family:var(--head);line-height:1}
+.moves b{display:block;font-size:1.9rem}
+.moves small{font-size:.7rem;font-weight:500}
+.moves.low{animation:pulse .8s infinite}
+.scorebar{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-weight:700}
+.stars{letter-spacing:2px}
+.stars .off{filter:grayscale(1);opacity:.35}
+.prog{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rose),var(--butter));border-radius:99px;transition:width .4s}
+.goals{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--line);border-radius:99px;padding:3px 12px 3px 6px;font-weight:700}
+.chip .e{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:1.1rem}
+.chip.done{border-color:var(--teal);color:var(--teal)}
+.chip.done::after{content:'✓'}
+
+.frame{background:linear-gradient(160deg,var(--board),var(--board2));padding:10px;border-radius:26px;box-shadow:0 10px 0 rgba(0,0,0,.12);position:relative}
+.frame::before{content:'';position:absolute;left:50%;top:5px;width:40px;height:3px;border-radius:3px;background:rgba(255,255,255,.18);transform:translateX(-50%)}
+#board{--cell:min(calc((100vw - 52px)/8),62px);position:relative;width:calc(var(--cell)*8);height:calc(var(--cell)*8);margin:0 auto;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:16px;
+  background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:var(--cell) var(--cell)}
+.tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);padding:3px;transform:translate(calc(var(--cell)*var(--x)),calc(var(--cell)*var(--y)));transition:transform .28s cubic-bezier(.4,.1,.3,1);pointer-events:none}
+.in{position:relative;width:100%;height:100%;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 -4px 0 rgba(0,0,0,.14),inset 0 3px 0 rgba(255,255,255,.35)}
+.em{font-size:calc(var(--cell)*.5);line-height:1}
+.t0 .in{background:var(--t0)}.t1 .in{background:var(--t1)}.t2 .in{background:var(--t2)}
+.t3 .in{background:var(--t3)}.t4 .in{background:var(--t4)}.t5 .in{background:var(--t5)}
+.tile.sel .in{outline:3px solid #fff;outline-offset:1px;transform:scale(1.08)}
+.tile.hint .in{animation:hint .7s infinite alternate}
+.tile.pop .in{animation:pop .3s forwards}
+.tile.shake .in{animation:shake .35s}
+.badge{position:absolute;right:-1px;bottom:-1px;min-width:40%;height:40%;border-radius:99px;background:var(--ink);color:var(--bg);font:700 calc(var(--cell)*.24)/1 var(--head);display:grid;place-items:center}
+.tile.row .in,.tile.col .in{box-shadow:0 0 0 3px var(--rose),0 0 14px 2px var(--rose),inset 0 -4px 0 rgba(0,0,0,.14)}
+.tile.kit .in{box-shadow:0 0 0 3px var(--butter),0 0 16px 4px var(--butter),inset 0 -4px 0 rgba(0,0,0,.14)}
+.tile.kit .badge{background:var(--butter);color:#4a3600}
+.tile.doppler .in{background:conic-gradient(#f9c6d0,#bfe3f5,#d9cbf3,#fbe29a,#c9e8b5,#f9c6d0);box-shadow:0 0 0 3px #fff,0 0 16px 4px rgba(255,255,255,.5)}
+.tile.ice .in::after{content:'❄';position:absolute;inset:-2px;border-radius:32%;display:grid;place-items:center;font-size:calc(var(--cell)*.3);color:#fff;
+  background:linear-gradient(135deg,rgba(235,250,255,.9),rgba(140,200,235,.78));border:2px solid #fff;text-shadow:0 1px 2px rgba(0,60,100,.5)}
+.float{position:absolute;font:700 calc(var(--cell)*.4)/1 var(--head);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35);pointer-events:none;transform:translate(-50%,-50%);animation:floatup .9s forwards;z-index:5}
+.banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:9}
+.banner span{font:700 clamp(1.6rem,8vw,2.6rem)/1.05 var(--head);color:var(--butter);text-align:center;text-shadow:0 4px 0 rgba(0,0,0,.4);animation:ban 1.3s forwards;padding:0 10px}
+
+.actions{display:flex;gap:8px;margin:14px 0}
+.actions button{flex:1}
+.notes{display:grid;gap:10px}
+.note{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 14px}
+.note h3{font-size:.95rem;color:var(--teal);margin-bottom:3px}
+.note p{margin:0;font-size:.95rem}
+.note.clin{border-color:var(--rose)}
+.note.clin h3{color:var(--rose)}
+
+/* ---------- Modal ---------- */
+.modal{position:fixed;inset:0;background:rgba(5,20,24,.62);display:grid;place-items:center;padding:16px;z-index:50;overflow:auto}
+.card{background:var(--surface);border-radius:26px;padding:22px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 0 rgba(0,0,0,.15);animation:rise .3s}
+.card h2{font-size:1.7rem;color:var(--teal)}
+.card p{margin:0}
+.card .big{font-size:2.2rem;text-align:center;letter-spacing:6px}
+.card .row{display:flex;gap:8px}
+.card .row button{flex:1}
+.card ul{margin:0;padding-left:1.1rem}
+
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.3);filter:brightness(1.4)}100%{transform:scale(0);opacity:0}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes hint{from{transform:scale(1)}to{transform:scale(1.14);filter:brightness(1.2)}}
+@keyframes pulse{50%{transform:scale(1.08)}}
+@keyframes floatup{to{transform:translate(-50%,-150%);opacity:0}}
+@keyframes ban{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.1);opacity:1}80%{transform:scale(1);opacity:1}100%{transform:scale(1.2);opacity:0}}
+@keyframes rise{from{transform:translateY(24px);opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .tile{transition-duration:.01s}
+  .moves.low,.tile.hint .in,.card{animation:none}
+}
+</style>
+</head>
+<body>
+<main id="app">
+
+  <!-- INICIO -->
+  <section id="scr-start" class="screen">
+    <div class="hero">
+      <div class="logo-row">
+        <div class="logo-ring" aria-hidden="true">👶</div>
+        <h1>Obstetric Match</h1>
+      </div>
+      <p class="lead">Combina fichas obstétricas, resuelve cada etapa de la gestación y llega al parto con la paciente a salvo.</p>
+      <div class="demo" aria-hidden="true">
+        <span style="background:var(--t0)">👶</span><span style="background:var(--t1)">🩺</span><span style="background:var(--t2)">🧪</span>
+        <span style="background:var(--t3)">💊</span><span style="background:var(--t4)">🩸</span><span style="background:var(--t5)">🍏</span>
+      </div>
+      <div class="field">
+        <label for="name">Nombre de Doctor/a</label>
+        <input id="name" type="text" maxlength="24" placeholder="Ej: Dra. Vega" autocomplete="off">
+      </div>
+      <div class="field">
+        <label id="dl">Dificultad</label>
+        <div class="diffs" role="group" aria-labelledby="dl">
+          <button class="diff" data-d="easy" aria-pressed="false"><span class="ic">🩺</span><span>Residencia<small>Fácil · más movimientos por nivel</small></span></button>
+          <button class="diff" data-d="normal" aria-pressed="true"><span class="ic">👩‍⚕️</span><span>Especialista<small>Normal · el reto estándar</small></span></button>
+          <button class="diff" data-d="hard" aria-pressed="false"><span class="ic">🚑</span><span>Guardia Maternidad<small>Difícil · menos movimientos</small></span></button>
+        </div>
+      </div>
+      <button id="btn-start" class="rose">Empezar la guardia</button>
+      <p class="fine">Juego educativo con fines de entretenimiento. No reemplaza la formación ni el criterio clínico profesional.</p>
+    </div>
+  </section>
+
+  <!-- MAPA -->
+  <section id="scr-map" class="screen hidden">
+    <div class="map-head">
+      <div><h2>Mapa de la gestación</h2><p id="map-greet"></p></div>
+      <button class="ghost" id="btn-home">Inicio</button>
+    </div>
+    <div class="path" id="path"></div>
+  </section>
+
+  <!-- JUEGO -->
+  <section id="scr-game" class="screen hidden">
+    <div class="hud">
+      <div>
+        <h2 id="g-title"></h2>
+        <div class="sub" id="g-patient"></div>
+      </div>
+      <div class="moves" id="g-moves"><b>0</b><small>movimientos</small></div>
+    </div>
+    <div class="scorebar"><span class="stars" id="g-stars"></span><span id="g-score"></span></div>
+    <div class="prog" aria-label="Progreso clínico"><i id="g-prog"></i></div>
+    <div class="goals" id="g-goals"></div>
+    <div class="frame"><div id="board" aria-label="Tablero de fichas obstétricas"></div></div>
+    <div class="actions">
+      <button class="ghost" id="btn-map">Mapa</button>
+      <button class="ghost" id="btn-hint">Pista</button>
+      <button class="ghost" id="btn-restart">Reiniciar</button>
+    </div>
+    <div class="notes">
+      <div class="note"><h3>Parte médico</h3><p id="g-narr"></p></div>
+      <div class="note clin"><h3>Nota clínica</h3><p id="g-tip">Intercambia dos fichas vecinas para formar líneas de 3 o más.</p></div>
+    </div>
+    <p class="fine" style="margin-top:12px">4 en línea: Bomba de Oxitocina (limpia fila o columna) · 5 en línea: Ecografía Doppler (limpia un tipo) · Forma de L o T: Kit de Parto Dorado (explosión 3×3). Las fichas con ❄ no se mueven hasta que una combinación las toque.</p>
+  </section>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="card" id="modal-card"></div></div>
+</main>
+
+<script>
+(() => {
+const N = 8;
+const TYPES = ['👶','🩺','🧪','💊','🩸','🍏'];
+const NAMES = {'👶':'Ecografías','🩺':'Controles','🧪':'Hormonas','💊':'Vitaminas','🩸':'Presiones','🍏':'Nutrición'};
+const COLORS = {'👶':'var(--t0)','🩺':'var(--t1)','🧪':'var(--t2)','💊':'var(--t3)','🩸':'var(--t4)','🍏':'var(--t5)'};
+const DIFFS = {easy:{mult:1.35,label:'Residencia'},normal:{mult:1,label:'Especialista'},hard:{mult:.8,label:'Guardia Maternidad'}};
+
+const TIPS = {
+  '👶':['La ecografía obstétrica confirma vitalidad fetal, edad gestacional y número de fetos.','El latido cardíaco embrionario suele verse por ecografía transvaginal desde las 6 semanas aproximadamente.'],
+  '🩺':['Los controles prenatales periódicos detectan a tiempo complicaciones maternas y fetales.','En cada control se miden presión arterial, peso, altura uterina y latidos fetales.'],
+  '🧪':['La hCG sostiene al cuerpo lúteo al inicio del embarazo; es la hormona que detectan los test de embarazo.','La oxitocina estimula las contracciones uterinas y se usa también para prevenir la hemorragia posparto.'],
+  '💊':['El ácido fólico, desde antes de la concepción y en el primer trimestre, reduce el riesgo de defectos del tubo neural.','Los suplementos de hierro y folato se indican según los controles y los análisis de cada paciente.'],
+  '🩸':['Una presión arterial de 140/90 o más después de la semana 20 obliga a descartar preeclampsia.','Controlar el sangrado tras el parto es clave: el manejo activo del alumbramiento previene la hemorragia posparto.'],
+  '🍏':['Una alimentación variada y rica en hierro ayuda a prevenir la anemia gestacional.','La diabetes gestacional se tamiza habitualmente entre las semanas 24 y 28.']
+};
+const SPECIAL_TIPS = {
+  row:'💥 Bomba de Oxitocina: como la oxitocina, provoca una contracción que recorre toda la línea.',
+  col:'💥 Bomba de Oxitocina: como la oxitocina, provoca una contracción que recorre toda la línea.',
+  doppler:'📡 Ecografía Doppler: evalúa el flujo sanguíneo útero-placentario y fetal; aquí limpia todas las fichas de un tipo.',
+  kit:'✨ Kit de Parto Dorado: material estéril listo para el momento decisivo; explota en un área de 3×3.'
+};
+
+const LEVELS = [
+  {name:'Primer trimestre',patient:'Lucía',weeks:8,moves:20,types:['👶','🩺','🧪','💊','🍏'],
+   goals:[{t:'💊',n:12}],ice:0,stars:[500,900,1400],
+   intro:'Lucía llega a su primera consulta con náuseas y mucha ilusión. Hay que asegurar el folato en las primeras semanas, cuando se forma el tubo neural.',
+   outro:'El ácido folato cubierto a tiempo reduce el riesgo de defectos del tubo neural. Primera consulta resuelta.'},
+  {name:'Control prenatal',patient:'Camila',weeks:20,moves:20,types:['👶','🩺','🧪','💊','🍏'],
+   goals:[{t:'👶',n:12},{t:'🩺',n:10}],ice:0,stars:[700,1200,1900],
+   intro:'Camila está en la ecografía morfológica de las 20 semanas. Revisa anatomía fetal y completa los controles pendientes.',
+   outro:'La ecografía morfológica evalúa la anatomía fetal y la placenta; junto con los controles regulares permite actuar a tiempo.'},
+  {name:'Nutrición y glucosa',patient:'Valeria',weeks:28,moves:22,types:['👶','🩺','🧪','💊','🍏'],
+   goals:[{t:'🍏',n:15},{ice:true,n:4}],ice:4,stars:[800,1400,2200],
+   intro:'Valeria tiene antecedentes familiares de diabetes. Hay que reforzar su alimentación y despejar los bloqueos de la prueba de glucosa (❄).',
+   outro:'El tamizaje de diabetes gestacional entre las semanas 24 y 28 y una dieta equilibrada protegen a madre y bebé.'},
+  {name:'Alerta: preeclampsia',patient:'Andrea',weeks:34,moves:24,types:['👶','🩺','🧪','💊','🩸','🍏'],
+   goals:[{t:'🩸',n:12},{ice:true,n:8}],ice:8,stars:[1000,1700,2600],
+   intro:'Andrea presenta cefalea y presión elevada. Las fichas congeladas ❄ representan la preeclampsia: combina a su lado para despejarlas y estabilizar la presión.',
+   outro:'La preeclampsia exige control estricto de la presión, laboratorio y, a veces, interrupción del embarazo. Detectarla a tiempo salva vidas.'},
+  {name:'Trabajo de parto',patient:'Sofía',weeks:39,moves:26,types:['👶','🩺','🧪','💊','🩸','🍏'],
+   goals:[{t:'🧪',n:14},{t:'👶',n:14},{ice:true,n:6}],ice:6,stars:[1300,2200,3300],
+   intro:'Sofía está en trabajo de parto activo. Controla las contracciones distócicas ❄, mantén las hormonas a punto y prepara la llegada del bebé.',
+   outro:'Un parto seguro combina monitoreo fetal, manejo del dolor, oxitocina bien indicada y un equipo atento. ¡Bienvenido al mundo!'}
+];
+
+/* ---------- Estado ---------- */
+const S = {name:'Dra. Vega',diff:'normal',unlocked:0,stars:[0,0,0,0,0],lvl:0,g:[],moves:0,score:0,prog:{},goals:[],types:[],
+           busy:false,over:true,sel:null,hintTimer:null,combos:{}};
+const els = new Map();
+let uid = 1;
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rnd = n => Math.floor(Math.random()*n);
+const board = $('#board');
+
+function save(){ try{ localStorage.setItem('obsmatch',JSON.stringify({name:S.name,diff:S.diff,unlocked:S.unlocked,stars:S.stars})); }catch(e){} }
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem('obsmatch')||'null');
+    if(d){ S.name=d.name||S.name; S.diff=d.diff||S.diff; S.unlocked=d.unlocked||0; S.stars=d.stars||S.stars; }
+  }catch(e){}
+}
+
+/* ---------- Pantallas ---------- */
+function show(id){
+  ['start','map','game'].forEach(k => $('#scr-'+k).classList.toggle('hidden', k!==id));
+  window.scrollTo(0,0);
+}
+function modal(html){ $('#modal-card').innerHTML = html; $('#modal').classList.remove('hidden'); }
+function closeModal(){ $('#modal').classList.add('hidden'); }
+
+function setDiff(d){
+  S.diff = d;
+  document.querySelectorAll('.diff').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.d===d)));
+}
+function renderMap(){
+  $('#map-greet').textContent = S.name + ' · ' + DIFFS[S.diff].label;
+  const p = $('#path'); p.innerHTML = '';
+  LEVELS.forEach((L,i) => {
+    const locked = i > S.unlocked;
+    const b = document.createElement('button');
+    b.className = 'node' + (locked?' locked':'');
+    b.disabled = locked;
+    const st = S.stars[i] ? '⭐'.repeat(S.stars[i]) : (locked?'🔒':'');
+    b.innerHTML = `<span class="num">${i+1}</span><span><b>${L.name}</b><small>${L.patient}, ${L.weeks} semanas</small></span><span class="st">${st}</span>`;
+    b.addEventListener('click', () => startLevel(i));
+    p.appendChild(b);
+  });
+  if(S.unlocked >= LEVELS.length){
+    const d = document.createElement('div');
+    d.className = 'note clin';
+    d.innerHTML = '<h3>Alta médica</h3><p>Completaste todo el mapa. Repite niveles para conseguir las 3 estrellas.</p>';
+    p.appendChild(d);
+  }
+}
+
+/* ---------- Tablero ---------- */
+function newTile(){ return {id:uid++, t:S.types[rnd(S.types.length)], sp:null, ice:false}; }
+
+function buildBoard(){
+  const L = LEVELS[S.lvl];
+  let tries = 0;
+  do{
+    const g = Array.from({length:N},()=>Array(N).fill(null));
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+      let t, k=0;
+      do{ t = S.types[rnd(S.types.length)]; k++; }
+      while(k<30 && ((c>=2 && g[r][c-1].t===t && g[r][c-2].t===t) || (r>=2 && g[r-1][c].t===t && g[r-2][c].t===t)));
+      g[r][c] = {id:uid++, t, sp:null, ice:false};
+    }
+    S.g = g; tries++;
+  } while(!findHint() && tries<50);
+  let placed = 0;
+  while(placed < L.ice){
+    const r = rnd(N), c = rnd(N);
+    if(!S.g[r][c].ice){ S.g[r][c].ice = true; placed++; }
+  }
+}
+
+function render(){
+  const present = new Set();
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    const t = S.g[r][c]; if(!t) continue;
+    present.add(t.id);
+    let el = els.get(t.id);
+    if(!el){
+      el = document.createElement('div');
+      el.innerHTML = '<div class="in"><span class="em"></span><span class="badge"></span></div>';
+      els.set(t.id, el); board.appendChild(el);
+      el.style.setProperty('--x', c); el.style.setProperty('--y', r-N);
+      el.getBoundingClientRect();
+    }
+    const idx = TYPES.indexOf(t.t);
+    const hint = el.classList.contains('hint'), sel = el.classList.contains('sel');
+    el.className = 'tile ' + (idx>=0?'t'+idx:'') + (t.sp?' '+t.sp:'') + (t.ice?' ice':'') + (hint?' hint':'') + (sel?' sel':'');
+    el.firstChild.firstChild.textContent = t.sp==='doppler' ? '📡' : t.t;
+    const bd = el.firstChild.lastChild;
+    bd.style.display = t.sp ? '' : 'none';
+    bd.textContent = {row:'↔',col:'↕',kit:'✚',doppler:'◉'}[t.sp] || '';
+    el.style.setProperty('--x', c); el.style.setProperty('--y', r);
+  }
+  for(const [id,el] of els) if(!present.has(id)){ el.remove(); els.delete(id); }
+}
+
+function elAt(r,c){ const t = S.g[r][c]; return t ? els.get(t.id) : null; }
+function cellSize(){ return board.clientWidth / N; }
+function floatText(txt,r,c){
+  const f = document.createElement('div'); f.className='float'; f.textContent = txt;
+  const s = cellSize(); f.style.left = (c+.5)*s+'px'; f.style.top = (r+.5)*s+'px';
+  board.appendChild(f); setTimeout(()=>f.remove(), 950);
+}
+function banner(txt){
+  const b = document.createElement('div'); b.className='banner'; b.innerHTML = '<span>'+txt+'</span>';
+  board.appendChild(b); setTimeout(()=>b.remove(), 1400);
+}
+function shake(...ts){ ts.forEach(t => { const el = t && els.get(t.id); if(el){ el.classList.add('shake'); setTimeout(()=>el.classList.remove('shake'),380); } }); }
+
+/* ---------- HUD ---------- */
+function goalLeft(g){ return Math.max(0, g.n - (g.ice ? (S.prog.ice||0) : (S.prog[g.t]||0))); }
+function goalsDone(){ return S.goals.every(g => goalLeft(g)===0); }
+function starCount(){ const th = LEVELS[S.lvl].stars; return S.score>=th[2]?3:S.score>=th[1]?2:S.score>=th[0]?1:0; }
+function hud(){
+  const L = LEVELS[S.lvl];
+  $('#g-title').textContent = 'Nivel '+(S.lvl+1)+' · '+L.name;
+  $('#g-patient').textContent = 'Paciente: '+L.patient+', '+L.weeks+' semanas';
+  $('#g-moves').innerHTML = '<b>'+S.moves+'</b><small>movimientos</small>';
+  $('#g-moves').classList.toggle('low', S.moves>0 && S.moves<=3);
+  const sc = starCount(), th = L.stars;
+  $('#g-stars').innerHTML = [0,1,2].map(i => '<span class="'+(i<sc?'':'off')+'">⭐</span>').join('');
+  $('#g-score').textContent = S.score + ' / ' + (th[Math.min(sc,2)]) + ' pts';
+  const done = S.goals.reduce((a,g)=> a + (g.n-goalLeft(g))/g.n, 0)/S.goals.length;
+  $('#g-prog').style.width = Math.round(done*100)+'%';
+  $('#g-goals').innerHTML = S.goals.map(g => {
+    const left = goalLeft(g);
+    const e = g.ice ? '❄️' : g.t, bg = g.ice ? 'var(--ice)' : COLORS[g.t];
+    const lbl = g.ice ? 'Preeclampsia' : NAMES[g.t];
+    return `<div class="chip ${left===0?'done':''}"><span class="e" style="background:${bg}">${e}</span><span>${left===0?'':left+' '}${lbl}</span></div>`;
+  }).join('');
+}
+function narr(t){ $('#g-narr').textContent = t; }
+function tip(t){ $('#g-tip').textContent = t; }
+
+/* ---------- Lógica Match-3 ---------- */
+function findRuns(g){
+  const runs = [];
+  for(let r=0;r<N;r++){
+    let c=0;
+    while(c<N){
+      const t = g[r][c];
+      if(!t || t.t==='D'){ c++; continue; }
+      let e=c+1;
+      while(e<N && g[r][e] && g[r][e].t===t.t) e++;
+      if(e-c>=3) runs.push({dir:'h',t:t.t,cells:Array.from({length:e-c},(_,i)=>[r,c+i])});
+      c=e;
+    }
+  }
+  for(let c=0;c<N;c++){
+    let r=0;
+    while(r<N){
+      const t = g[r][c];
+      if(!t || t.t==='D'){ r++; continue; }
+      let e=r+1;
+      while(e<N && g[e][c] && g[e][c].t===t.t) e++;
+      if(e-r>=3) runs.push({dir:'v',t:t.t,cells:Array.from({length:e-r},(_,i)=>[r+i,c])});
+      r=e;
+    }
+  }
+  return runs;
+}
+
+function findMatches(pref){
+  const runs = findRuns(S.g);
+  const matched = new Set(), specials = [];
+  if(!runs.length) return {matched, specials};
+  runs.forEach(run => run.cells.forEach(([r,c]) => matched.add(r*N+c)));
+  const taken = new Set();
+  const hs = runs.filter(x=>x.dir==='h'), vs = runs.filter(x=>x.dir==='v');
+  hs.forEach(h => vs.forEach(v => {
+    const common = h.cells.find(([r,c]) => v.cells.some(([r2,c2]) => r===r2 && c===c2));
+    if(common && !h.used && !v.used){
+      specials.push({r:common[0],c:common[1],sp:'kit',t:h.t});
+      taken.add(common[0]*N+common[1]); h.used = v.used = true;
+    }
+  }));
+  const pick = run => {
+    const pc = (pref||[]).find(p => run.cells.some(([r,c]) => r===p.r && c===p.c) && !taken.has(p.r*N+p.c));
+    if(pc) return [pc.r,pc.c];
+    const free = run.cells.filter(([r,c]) => !taken.has(r*N+c));
+    return free[Math.floor(free.length/2)] || run.cells[0];
+  };
+  runs.filter(x=>!x.used && x.cells.length>=5).forEach(run => {
+    const [r,c] = pick(run); taken.add(r*N+c); specials.push({r,c,sp:'doppler',t:'D'}); run.used = true;
+  });
+  runs.filter(x=>!x.used && x.cells.length===4).forEach(run => {
+    const [r,c] = pick(run); taken.add(r*N+c); specials.push({r,c,sp:run.dir==='h'?'row':'col',t:run.t}); run.used = true;
+  });
+  return {matched, specials};
+}
+
+function mostCommonType(){
+  const cnt = {};
+  S.g.forEach(row => row.forEach(t => { if(t && TYPES.includes(t.t)) cnt[t.t]=(cnt[t.t]||0)+1; }));
+  return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+}
+
+async function clearSet(matched, specials, combo){
+  const spawn = new Set(specials.map(s => s.r*N+s.c));
+  const clear = new Set([...matched].filter(k => !spawn.has(k)));
+  const queue = [...clear], done = new Set();
+  const add = (r,c) => { if(r<0||c<0||r>=N||c>=N) return; const k=r*N+c; if(!clear.has(k) && !spawn.has(k) && S.g[r][c]){ clear.add(k); queue.push(k); } };
+  let usedSp = null;
+  while(queue.length){
+    const k = queue.pop(); if(done.has(k)) continue; done.add(k);
+    const r = Math.floor(k/N), c = k%N, t = S.g[r][c];
+    if(!t || !t.sp) continue;
+    usedSp = t.sp;
+    if(t.sp==='row') for(let i=0;i<N;i++) add(r,i);
+    else if(t.sp==='col') for(let i=0;i<N;i++) add(i,c);
+    else if(t.sp==='kit') for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++) add(r+i,c+j);
+    else if(t.sp==='doppler'){
+      const target = mostCommonType();
+      for(let i=0;i<N;i++) for(let j=0;j<N;j++) if(S.g[i][j] && S.g[i][j].t===target) add(i,j);
+    }
+  }
+  /* Puntos, objetivos y hielo */
+  let cleared = 0;
+  const iceHit = new Set();
+  clear.forEach(k => {
+    const r = Math.floor(k/N), c = k%N, t = S.g[r][c]; if(!t) return;
+    cleared++;
+    if(TYPES.includes(t.t)){ S.prog[t.t] = (S.prog[t.t]||0)+1; S.combos[t.t] = (S.combos[t.t]||0)+1; }
+    if(t.ice){ S.prog.ice = (S.prog.ice||0)+1; }
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc]) => {
+      const nr=r+dr, nc=c+dc;
+      if(nr<0||nc<0||nr>=N||nc>=N) return;
+      const nk = nr*N+nc, nt = S.g[nr][nc];
+      if(nt && nt.ice && !clear.has(nk) && !iceHit.has(nk)){ iceHit.add(nk); }
+    });
+  });
+  iceHit.forEach(k => { const r=Math.floor(k/N), c=k%N, t=S.g[r][c]; t.ice=false; S.prog.ice=(S.prog.ice||0)+1; floatText('❄✖',r,c); });
+  const gain = cleared*10*combo + specials.length*40;
+  S.score += gain;
+  /* Animación y retirada */
+  let fr=0, fc=0;
+  clear.forEach(k => {
+    const r=Math.floor(k/N), c=k%N, t=S.g[r][c]; if(!t) return;
+    fr=r; fc=c;
+    const el = els.get(t.id);
+    if(el){ el.classList.add('pop'); els.delete(t.id); setTimeout(()=>el.remove(),320); }
+    S.g[r][c] = null;
+  });
+  specials.forEach(s => {
+    const t = S.g[s.r][s.c]; if(!t) return;
+    t.sp = s.sp; t.t = s.t; t.ice = false;
+  });
+  if(cleared) floatText('+'+gain, fr, fc);
+  if(combo>=2) narr('¡Cascada x'+combo+'! Las combinaciones encadenadas suman más puntos.');
+  if(usedSp){ tip(SPECIAL_TIPS[usedSp]); S.spTip = true; }
+  else if(specials.length){ tip(SPECIAL_TIPS[specials[0].sp]); S.spTip = true; }
+  render(); hud();
+  await sleep(330);
+}
+
+function gravity(){
+  for(let c=0;c<N;c++){
+    const col = [];
+    for(let r=N-1;r>=0;r--) if(S.g[r][c]) col.push(S.g[r][c]);
+    for(let r=N-1;r>=0;r--) S.g[r][c] = col[N-1-r] || newTile();
+  }
+}
+
+async function resolve(pref){
+  let combo = 0;
+  S.combos = {}; S.spTip = false;
+  while(true){
+    const m = findMatches(pref); pref = null;
+    if(!m.matched.size) break;
+    combo++;
+    await clearSet(m.matched, m.specials, combo);
+    gravity(); render(); hud();
+    await sleep(380);
+  }
+  const top = Object.keys(S.combos).sort((a,b)=>S.combos[b]-S.combos[a])[0];
+  if(top){
+    const n = S.combos[top];
+    if(combo<2) narr(L_narr(top,n));
+    if(!S.spTip) tip(TIPS[top][rnd(TIPS[top].length)]);
+  }
+}
+function L_narr(t,n){
+  const P = LEVELS[S.lvl].patient;
+  const msgs = {
+    '👶':'Se despeja el campo de la ecografía: '+n+' ficha(s). '+P+' ve a su bebé con claridad.',
+    '🩺':'Controles al día ('+n+'). '+P+' se siente acompañada y tranquila.',
+    '🧪':'Balance hormonal ajustado ('+n+'). El cuerpo de '+P+' responde bien.',
+    '💊':'Suplementos entregados ('+n+'). Los micronutrientes de '+P+' mejoran.',
+    '🩸':'Parámetros de presión y sangrado bajo control ('+n+').',
+    '🍏':'Mejora la nutrición de '+P+' ('+n+'): más hierro y mejor energía.'
+  };
+  return msgs[t];
+}
+
+function hasMatchAfterSwap(a,b){
+  const t1 = S.g[a.r][a.c], t2 = S.g[b.r][b.c];
+  if(t1.ice || t2.ice) return false;
+  if(t1.sp==='doppler' || t2.sp==='doppler') return true;
+  S.g[a.r][a.c] = t2; S.g[b.r][b.c] = t1;
+  const ok = findRuns(S.g).length > 0;
+  S.g[a.r][a.c] = t1; S.g[b.r][b.c] = t2;
+  return ok;
+}
+function findHint(){
+  const moves = [];
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    [[0,1],[1,0]].forEach(([dr,dc]) => {
+      const nr=r+dr, nc=c+dc;
+      if(nr<N && nc<N){
+        const a={r,c}, b={r:nr,c:nc};
+        if(hasMatchAfterSwap(a,b)) moves.push([a,b]);
+      }
+    });
+  }
+  return moves.length ? moves[rnd(moves.length)] : null;
+}
+function shuffleBoard(){
+  let tries = 0;
+  do{
+    const flat = S.g.flat();
+    for(let i=flat.length-1;i>0;i--){ const j=rnd(i+1); [flat[i],flat[j]] = [flat[j],flat[i]]; }
+    S.g = Array.from({length:N},(_,r)=>flat.slice(r*N,r*N+N));
+    tries++;
+  } while((findRuns(S.g).length || !findHint()) && tries<80);
+  render();
+}
+
+/* ---------- Turnos ---------- */
+function clearHint(){
+  clearTimeout(S.hintTimer);
+  board.querySelectorAll('.hint').forEach(e => e.classList.remove('hint'));
+}
+function clearSel(){ board.querySelectorAll('.sel').forEach(e => e.classList.remove('sel')); S.sel = null; }
+
+async function trySwap(a,b){
+  if(S.busy || S.over) return;
+  S.busy = true; clearHint(); clearSel();
+  const ta = S.g[a.r][a.c], tb = S.g[b.r][b.c];
+  if(ta.ice || tb.ice){
+    shake(ta,tb);
+    narr('❄️ Esa ficha está congelada (preeclampsia). Despéjala con una combinación a su lado.');
+    S.busy = false; return;
+  }
+  S.g[a.r][a.c] = tb; S.g[b.r][b.c] = ta; render();
+  await sleep(280);
+  const dop = ta.sp==='doppler' ? {d:ta,o:tb} : tb.sp==='doppler' ? {d:tb,o:ta} : null;
+  if(dop){
+    S.moves--; hud();
+    const set = new Set();
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+      const t = S.g[r][c];
+      if(!t) continue;
+      if(t===dop.d || (dop.o.sp==='doppler') || (t.t===dop.o.t && dop.o.t!=='D')) set.add(r*N+c);
+    }
+    S.combos = {};
+    tip(SPECIAL_TIPS.doppler);
+    await clearSet(set, [], 2);
+    gravity(); render(); hud();
+    await sleep(380);
+    await resolve(null);
+  }else{
+    const m = findMatches([a,b]);
+    if(!m.matched.size){
+      S.g[a.r][a.c] = ta; S.g[b.r][b.c] = tb; render();
+      await sleep(280);
+      shake(ta,tb);
+      narr('Ese intercambio no forma ninguna combinación. Prueba con otro.');
+      S.busy = false; return;
+    }
+    S.moves--; hud();
+    await resolve([a,b]);
+  }
+  await afterTurn();
+}
+
+async function afterTurn(){
+  if(goalsDone()){ await win(); return; }
+  if(S.moves<=0){ lose(); return; }
+  if(!findHint()){
+    narr('No quedaban movimientos posibles: se reorganiza el tablero.');
+    banner('Reorganizando');
+    await sleep(500);
+    shuffleBoard();
+  }
+  S.busy = false;
+}
+
+async function win(){
+  S.over = true;
+  const left = S.moves;
+  banner('¡PARTO EXITOSO!');
+  narr('¡Parto exitoso! '+LEVELS[S.lvl].patient+' y su bebé están bien. Modo fiebre: los movimientos restantes se convierten en puntos.');
+  await sleep(1100);
+  for(let i=0;i<Math.min(left,10);i++){
+    S.moves--; hud();
+    const r = rnd(N), set = new Set();
+    for(let c=0;c<N;c++) if(S.g[r][c]) set.add(r*N+c);
+    await clearSet(set, [], 3+i);
+    gravity(); render();
+    await sleep(320);
+  }
+  S.score += left*60; S.moves = 0; hud();
+  const stars = Math.max(1, starCount());
+  S.stars[S.lvl] = Math.max(S.stars[S.lvl]||0, stars);
+  S.unlocked = Math.max(S.unlocked, Math.min(S.lvl+1, LEVELS.length));
+  save();
+  const last = S.lvl === LEVELS.length-1;
+  modal(`<h2>¡Parto exitoso!</h2>
+    <div class="big">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <p><b>${S.score} puntos</b> · ${LEVELS[S.lvl].patient}, ${LEVELS[S.lvl].weeks} semanas</p>
+    <p>${LEVELS[S.lvl].outro}</p>
+    ${last?'<p><b>¡Alta médica!</b> Completaste toda la guardia, '+S.name+'.</p>':''}
+    <div class="row">
+      <button class="ghost" id="m-map">Mapa</button>
+      ${last?'<button id="m-again" class="rose">Rejugar</button>':'<button id="m-next" class="rose">Siguiente nivel</button>'}
+    </div>`);
+  $('#m-map').onclick = () => { closeModal(); openMap(); };
+  if(last) $('#m-again').onclick = () => { closeModal(); startLevel(S.lvl, true); };
+  else $('#m-next').onclick = () => { closeModal(); startLevel(S.lvl+1); };
+}
+
+function lose(){
+  S.over = true; S.busy = false;
+  narr('Sin movimientos. La paciente necesita otro intento del equipo.');
+  modal(`<h2>Se acabó el turno</h2>
+    <p>No lograste completar los objetivos de <b>${LEVELS[S.lvl].name}</b>. Cada intento te enseña a priorizar mejor.</p>
+    <p>Consejo: busca combinaciones de 4 o 5 para crear fichas especiales y despejar las ❄ más rápido.</p>
+    <div class="row"><button class="ghost" id="m-map">Mapa</button><button class="rose" id="m-retry">Reintentar</button></div>`);
+  $('#m-map').onclick = () => { closeModal(); openMap(); };
+  $('#m-retry').onclick = () => { closeModal(); startLevel(S.lvl, true); };
+}
+
+/* ---------- Inicio de nivel ---------- */
+function openMap(){ clearHint(); renderMap(); show('map'); }
+
+function startLevel(i, skipIntro){
+  const L = LEVELS[i];
+  S.lvl = i; S.score = 0; S.prog = {}; S.combos = {};
+  S.moves = Math.round(L.moves * DIFFS[S.diff].mult);
+  S.goals = L.goals.map(g => ({...g, n: Math.max(3, Math.round(g.n * (S.diff==='easy'?.85:S.diff==='hard'?1.1:1)))}));
+  S.types = L.types;
+  S.busy = true; S.over = true; S.sel = null;
+  board.innerHTML = ''; els.clear();
+  const iceGoal = S.goals.find(g => g.ice);
+  if(iceGoal) L.ice = iceGoal.n;
+  buildBoard(); render(); hud();
+  narr(L.patient+' ('+L.weeks+' semanas) espera tu atención, '+S.name+'.');
+  tip('Intercambia dos fichas vecinas para formar líneas de 3 o más.');
+  show('game');
+  const goalsHtml = S.goals.map(g => g.ice ? '<li>❄️ Despejar '+g.n+' bloqueos de preeclampsia</li>' : '<li>'+g.t+' Juntar '+g.n+' '+NAMES[g.t]+'</li>').join('');
+  const begin = () => { closeModal(); S.busy = false; S.over = false; };
+  if(skipIntro){ begin(); return; }
+  modal(`<h2>Nivel ${i+1}: ${L.name}</h2>
+    <p><b>Paciente:</b> ${L.patient}, ${L.weeks} semanas de gestación</p>
+    <p>${L.intro}</p>
+    <p><b>Objetivo (${S.moves} movimientos):</b></p><ul>${goalsHtml}</ul>
+    <button class="rose" id="m-go">Entrar a consulta</button>`);
+  $('#m-go').onclick = begin;
+}
+
+/* ---------- Entrada (clic y arrastre) ---------- */
+let drag = null;
+function cellFromEvent(e){
+  const rc = board.getBoundingClientRect(), s = rc.width/N;
+  const c = Math.floor((e.clientX-rc.left)/s), r = Math.floor((e.clientY-rc.top)/s);
+  return (r>=0&&c>=0&&r<N&&c<N) ? {r,c} : null;
+}
+board.addEventListener('pointerdown', e => {
+  if(S.busy || S.over) return;
+  const cell = cellFromEvent(e); if(!cell) return;
+  drag = {cell, x:e.clientX, y:e.clientY, moved:false};
+  board.setPointerCapture(e.pointerId);
+});
+board.addEventListener('pointermove', e => {
+  if(!drag || drag.moved || S.busy) return;
+  const dx = e.clientX-drag.x, dy = e.clientY-drag.y, th = cellSize()*.35;
+  if(Math.max(Math.abs(dx),Math.abs(dy)) < th) return;
+  drag.moved = true;
+  const a = drag.cell;
+  const b = Math.abs(dx)>Math.abs(dy) ? {r:a.r,c:a.c+(dx>0?1:-1)} : {r:a.r+(dy>0?1:-1),c:a.c};
+  if(b.r<0||b.c<0||b.r>=N||b.c>=N) return;
+  clearSel(); trySwap(a,b);
+});
+board.addEventListener('pointerup', e => {
+  if(!drag) return;
+  const d = drag; drag = null;
+  if(d.moved || S.busy || S.over) return;
+  const cell = d.cell;
+  if(!S.sel){
+    S.sel = cell; const el = elAt(cell.r,cell.c); if(el) el.classList.add('sel');
+  }else if(S.sel.r===cell.r && S.sel.c===cell.c){
+    clearSel();
+  }else if(Math.abs(S.sel.r-cell.r)+Math.abs(S.sel.c-cell.c)===1){
+    const a = S.sel; clearSel(); trySwap(a,cell);
+  }else{
+    clearSel(); S.sel = cell; const el = elAt(cell.r,cell.c); if(el) el.classList.add('sel');
+  }
+});
+board.addEventListener('pointercancel', () => { drag = null; });
+
+/* ---------- Botones ---------- */
+document.querySelectorAll('.diff').forEach(b => b.addEventListener('click', () => setDiff(b.dataset.d)));
+$('#btn-start').addEventListener('click', () => {
+  const v = $('#name').value.trim();
+  S.name = v || S.name; save(); openMap();
+});
+$('#btn-home').addEventListener('click', () => show('start'));
+$('#btn-map').addEventListener('click', () => { if(S.busy && !S.over) return; openMap(); });
+$('#btn-restart').addEventListener('click', () => { if(S.busy && !S.over) return; startLevel(S.lvl, true); });
+$('#btn-hint').addEventListener('click', () => {
+  if(S.busy || S.over) return;
+  clearHint(); clearSel();
+  const h = findHint(); if(!h) return;
+  h.forEach(p => { const el = elAt(p.r,p.c); if(el) el.classList.add('hint'); });
+  narr('Pista: estas dos fichas forman una combinación si las intercambias.');
+  S.hintTimer = setTimeout(clearHint, 3000);
+});
+
+load();
+$('#name').value = S.name === 'Dra. Vega' ? '' : S.name;
+setDiff(S.diff);
+})();
+</script>
+</body>
+</html>
